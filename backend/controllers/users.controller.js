@@ -9,6 +9,7 @@ export const getUsersForSidebar = async (req, res) => {
 //   allUsers.forEach( (u) => {
 //        console.log(u.fullname);  
 //     } );
+    console.log(allUsers);
 
     res.status(200).json(allUsers);
   } catch (error) {

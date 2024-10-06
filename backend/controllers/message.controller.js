@@ -1,5 +1,7 @@
 import Conversation from '../models/conversation.model.js';
 import Message from '../models/message.model.js';
+import { io,getRecieverSocketId } from '../socket/socket.js';
+
 
 export const sendMessage = async (req, res) => {
   try {
@@ -23,11 +25,8 @@ export const sendMessage = async (req, res) => {
       conversation = await Conversation.create({
         participants: [senderId, receiverId]
       });
-      console.log("Created new conversation:", conversation);
-    } else {
-      console.log("Found existing conversation:", conversation);
-    }
-
+     
+    } 
     // Create a new message
     const newMessage = await Message.create({
       senderId,
@@ -36,14 +35,17 @@ export const sendMessage = async (req, res) => {
     });
      
      // socket io functionality
+      
 
-    console.log("Created new message:", newMessage);
 
     // Associate the message with the conversation
     conversation.messages.push(newMessage._id);
     await Promise.all([conversation.save(),newMessage.save()]);
-    console.log("Message associated with conversation and saved.");
-
+     
+    const receiverSocketId = getRecieverSocketId(receiverId);
+    if(receiverSocketId){
+      io.to(receiverSocketId).emit("newMessage", newMessage)
+    }
     res.status(200).json(newMessage);
   } catch (error) {
     console.error("Error in sendMessage controller:", error.message);
@@ -52,28 +54,22 @@ export const sendMessage = async (req, res) => {
 };
 
 
-export const getMessages = async(req,res) => {
+export const getMessages = async (req, res) => {
+	try {
+		const { id: userToChatId } = req.params;
+		const senderId = req.user._id;
 
-   console.log("get all messages");
+		const conversation = await Conversation.findOne({
+			participants: { $all: [senderId, userToChatId] },
+		}).populate("messages"); 
 
-   const {id:userToChatId} = req.params;
-   const senderId = req.user._id;
+		if (!conversation) return res.status(200).json([]);
 
-   const conversation = await Conversation.findOne({
-    participants:{$all:[userToChatId,senderId]}
-   }).populate("messages");
+		const messages = conversation.messages;
 
-
-   if(!conversation) return res.status(200).json([]);
-   
-   const messages = conversation.messages
-
-   res.status(200).json(messages);
-
-   try{
-
-   }catch (error) {
-    console.error("Error in getMessage controller:", error.message);
-    res.status(500).json({ error: "Internal server error", details: error.message });
-  }
-} 
+		res.status(200).json(messages);
+	} catch (error) {
+		console.log("Error in getMessages controller: ", error.message);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};

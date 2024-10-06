@@ -1,6 +1,3 @@
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
 import dotenv from "dotenv";
 import authRoutes from "../backend/routes/authRoutes.js";
 import messageRoutes from "../backend/routes/messageRoutes.js";
@@ -8,15 +5,14 @@ import userRoutes from "../backend/routes/userRoutes.js";
 import { connectDb } from "./database/db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { app, server } from "./socket/socket.js";
+import express from "express";
 
 dotenv.config();
-const app = express();
-app.use(cors());
-app.use(express.json()); // to parse the incoming request with JSON  paylods (from req.body)
-app.use(cookieParser());
 
-const server = createServer(app);
-const io = new Server(server);
+app.use(cors());
+app.use(express.json());
+app.use(cookieParser());
 
 const PORT = process.env.PORT || 5000;
 console.log(PORT);
@@ -29,11 +25,8 @@ app.get("/", (req, res) => {
   res.send("<h1>Hello</h1>");
 });
 
-io.on("connection", (socket) => {
-  console.log("a user connected");
-});
-
 server.listen(PORT, () => {
   connectDb();
   console.log(`Server running at ${PORT}`);
+  console.log("hii")
 });

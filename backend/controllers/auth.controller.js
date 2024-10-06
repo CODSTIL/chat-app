@@ -5,7 +5,7 @@ import User from "../models/user.model.js";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 
 const userSignup = async (req, res) => {
-  const { fullname, username, email, password, confirmPassword, gender } =
+  const { fullname, username, password, confirmPassword, gender,email } =
     req.body;
 
   if (password !== confirmPassword) {
@@ -14,10 +14,10 @@ const userSignup = async (req, res) => {
 
   if (
     !username ||
-    !email ||
     !password ||
     !fullname ||
     !gender ||
+    !email ||
     !confirmPassword
   ) {
     return res
